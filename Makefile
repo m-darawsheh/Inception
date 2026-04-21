@@ -5,30 +5,30 @@ COMPOSE = docker-compose -f srcs/docker-compose.yml
 all: up
 
 up:
-$(COMPOSE) up --build -d
+	$(COMPOSE) up --build -d
 
 down:
-$(COMPOSE) down
+	$(COMPOSE) down
 
 start:
-$(COMPOSE) start
+	$(COMPOSE) start
 
 stop:
-$(COMPOSE) stop
+	$(COMPOSE) stop
 
 restart: down up
 
 logs:
-$(COMPOSE) logs -f
+	$(COMPOSE) logs -f
 
 ps:
-$(COMPOSE) ps
+	$(COMPOSE) ps
 
 clean: down
-docker system prune -af
+	docker system prune -af
 
 fclean: clean
-docker volume prune -f
+	docker volume prune -f
 
 re: fclean up
 
