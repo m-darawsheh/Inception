@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p /run/php
+
 if [ ! -f /var/www/html/wp-config.php ]; then
     curl -O https://wordpress.org/latest.tar.gz
     tar -xvf latest.tar.gz
