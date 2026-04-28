@@ -1,20 +1,65 @@
 #!/bin/bash
+set -e
 
 mkdir -p /run/php
 
-if [ ! -f /var/www/html/wp-config.php ]; then
-    curl -O https://wordpress.org/latest.tar.gz
-    tar -xvf latest.tar.gz
-    mv wordpress/* /var/www/html/
+echo "⏳ Waiting for MariaDB..."
 
-    cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+# Wait for MariaDB
+while ! mysqladmin ping -h mariadb -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" --silent; do
+    sleep 2
+done
 
-    sed -i "s/database_name_here/$MYSQL_DATABASE/" /var/www/html/wp-config.php
-    sed -i "s/username_here/$MYSQL_USER/" /var/www/html/wp-config.php
-    sed -i "s/password_here/$MYSQL_PASSWORD/" /var/www/html/wp-config.php
-    sed -i "s/localhost/mariadb/" /var/www/html/wp-config.php
+echo "✅ MariaDB is ready!"
 
-    chown -R www-data:www-data /var/www/html
+cd /var/www/html
+
+# Download WordPress if missing
+if [ ! -f wp-load.php ]; then
+    echo "Downloading WordPress..."
+    wp core download --allow-root
 fi
 
+# Create wp-config.php if missing
+if [ ! -f wp-config.php ]; then
+    echo "Creating wp-config.php..."
+    wp config create \
+        --dbname="${MYSQL_DATABASE}" \
+        --dbuser="${MYSQL_USER}" \
+        --dbpass="${MYSQL_PASSWORD}" \
+        --dbhost="mariadb" \
+        --allow-root
+fi
+
+# Install WordPress if not already installed
+if ! wp core is-installed --allow-root; then
+    echo "Installing WordPress..."
+
+    wp core install \
+        --url="https://${DOMAIN_NAME}" \
+        --title="Inception" \
+        --admin_user="${WP_ADMIN_USER}" \
+        --admin_password="${WP_ADMIN_PASSWORD}" \
+        --admin_email="${WP_ADMIN_EMAIL}" \
+        --skip-email \
+        --allow-root
+fi
+
+# Create extra user if not exists
+if ! wp user get "${WP_USER}" --allow-root > /dev/null 2>&1; then
+    echo "Creating additional user..."
+    wp user create \
+        "${WP_USER}" \
+        "${WP_USER_EMAIL}" \
+        --role=editor \
+        --user_pass="${WP_USER_PASSWORD}" \
+        --allow-root
+fi
+
+# Fix permissions
+chown -R www-data:www-data /var/www/html
+
+echo "WordPress is ready!"
+
+# Start PHP-FPM
 exec php-fpm7.4 -F
