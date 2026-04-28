@@ -45,14 +45,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/m-dr/data/db
+      device: /home/mdarawsh/data/db
       o: bind
 
   wp_data:
     driver: local
     driver_opts:
       type: none
-      device: /home/m-dr/data/wp
+      device: /home/mdarawsh/data/wp
       o: bind
 
 networks:
