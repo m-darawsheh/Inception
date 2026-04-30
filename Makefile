@@ -10,8 +10,7 @@ WP_DATA = ${DATA_PATH}/wp
 all: up
 
 up:
-	@mkdir -p ${DB_DATA}
-	@mkdir -p ${WP_DATA}
+	@mkdir -p ${DB_DATA} ${WP_DATA}
 	$(COMPOSE) up --build -d
 
 down:
@@ -32,10 +31,10 @@ ps:
 	$(COMPOSE) ps
 
 clean: down
-	docker system prune -f
+	docker system prune -af
 
 fclean: clean
-	docker volume prune -f
+	docker volume rm $$(docker volume ls -q | grep srcs_) 2>/dev/null || true
 	sudo chown -R ${USER}:${USER} ${DATA_PATH} 2>/dev/null || true
 	rm -rf ${DATA_PATH}
 
